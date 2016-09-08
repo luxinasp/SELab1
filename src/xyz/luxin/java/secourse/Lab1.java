@@ -47,6 +47,11 @@ class Monomial extends Expression implements Comparable<Monomial> {
 	
 	public Monomial(String expString) throws ExpressionException {
 		
+		constVaule = 1;
+		varNumber = 0;
+		varIndex = new TreeMap<String, Integer>();
+		
+		
 		Pattern p = Pattern.compile("(\\d+|[a-z]|[A-Z])|(((\\d+|[a-z]|[A-Z])\\*)+(\\d+|[a-z]|[A-Z]))");
 		Matcher m = p.matcher(expString);
 		
@@ -54,15 +59,12 @@ class Monomial extends Expression implements Comparable<Monomial> {
 			throw new ExpressionException("Format Error");
 		}
 		
-		constVaule = 1;
-		varNumber = 0;
-		varIndex = new TreeMap<String, Integer>();
-		
+
 		String[] parts = expString.split("\\*");
 		
 		for (int i=0; i<parts.length; i++) {
 			if (parts[i].length()==1) {
-				if ((parts[i].toCharArray())[0]>=0 && (parts[i].toCharArray())[0]<=9) {
+				if ((parts[i].toCharArray())[0]>='0' && (parts[i].toCharArray())[0]<='9') {
 					constVaule = constVaule * Integer.parseInt(parts[i]);
 				} else {
 					if (varIndex.containsKey(parts[i])) {
@@ -90,13 +92,16 @@ class Monomial extends Expression implements Comparable<Monomial> {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
+			
+		if (varIndex.isEmpty()) {
+			return String.valueOf(constVaule);
+		}
+		
 		String result = "";
 		
 		if (constVaule != 1) {
 			result += String.valueOf(constVaule);
-			if (!varIndex.isEmpty()) {
-				result += "*";
-			}
+			result += "*";
 		}
 		
 		Iterator<Entry<String, Integer>> it = varIndex.entrySet().iterator();
@@ -109,12 +114,10 @@ class Monomial extends Expression implements Comparable<Monomial> {
 				result += "*";
 			}
 		}
-		
-		/*
+			
 		if ((result.toCharArray())[result.length()-1]=='*') {
-			result = result.substring(0, result.length()-2);
+			result = result.substring(0, result.length()-1);
 		}
-		*/
 		
 		return result;
 	}
@@ -258,7 +261,7 @@ public class Lab1 {
 		
 		ExpressionTree root = new ExpressionTree();
 		try {
-			ExpressionTree.createTree(root, "2+3*x*y+4+x*x*y+y");
+			ExpressionTree.createTree(root, "u+k*7*i+2+3*x*y*7+4+x*x*y+y");
 		} catch (ExpressionException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
