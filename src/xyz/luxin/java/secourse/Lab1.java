@@ -51,8 +51,8 @@ class Monomial extends Expression implements Comparable<Monomial> {
 		varNumber = 0;
 		varIndex = new TreeMap<String, Integer>();
 		
-		
-		Pattern p = Pattern.compile("(\\d+|[a-z]|[A-Z])|(((\\d+|[a-z]|[A-Z])\\*)+(\\d+|[a-z]|[A-Z]))");
+
+		Pattern p = Pattern.compile("(\\d+|[a-zA-Z])|(((\\d+|[a-zA-Z])\\*)+(\\d+|[a-zA-Z]))");
 		Matcher m = p.matcher(expString);
 		
 		if (!m.matches()) {
@@ -261,11 +261,11 @@ public class Lab1 {
 		
 		ExpressionTree root = new ExpressionTree();
 		try {
-			ExpressionTree.createTree(root, "u+k*7*i+2+3*x*y*7+4+x*x*y+y");
+			ExpressionTree.createTree(root, "y+k*7+i+2+3*x*y*7+4+x*x*y+y");
 		} catch (ExpressionException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
-			System.out.println("Wrong!");
+			//e.printStackTrace();
+			System.out.println(e.getMessage());
 			return;
 		}
 		
@@ -280,7 +280,49 @@ public class Lab1 {
 		//ExpressionTree.lastOrder(root);
 		//System.out.println("");
 		
-		System.out.println("Yes!");
+		System.out.println("Yes!\n\n\n\n");
+		
+		
+		/*
+		String pFactor = "(\\d+|[a-zA-Z])";
+		String pMonomial = "("+pFactor+"|(("+pFactor+"\\*)+"+pFactor+"))";
+		String pPolynomial = "("+pMonomial+"|(("+pMonomial+"\\+)+"+pMonomial+"))";
+		*/
+		
+		String pFactor = "(\\d+|[a-zA-Z])";
+		String pMonomial = "(" + pFactor + "(\\*" + pFactor + ")*)";
+		String pPolynomial = "(" + pMonomial + "(\\+" + pMonomial + ")*)";
+		
+		
+		Pattern p = Pattern.compile(pPolynomial);
+		Matcher m = p.matcher("y+k*7+i+2+3*x*y*7+4+x*x*y+y*i*o");
+		
+		System.out.println("y+k*7+i+2+3*x*y*7+4+x*x*y+y*i*o");
+		
+		if (m.matches()) {
+			System.out.println("Format Right");
+			
+			Pattern p1 = Pattern.compile(pMonomial);
+			Matcher m1 = p1.matcher("y+k*7+i+2+3*x*y*7+4+x*x*y+y*i*o");
+			
+			while (m1.find()) {
+				System.out.print(m1.group(0));
+				System.out.print(" : ");
+				
+				Pattern p2 = Pattern.compile(pFactor);
+				Matcher m2 = p2.matcher(m1.group(0));
+				
+				while (m2.find()) {
+					System.out.print(m2.group(0));
+					System.out.print("  ");
+				}
+				
+				System.out.println("");
+			}
+	
+		} else {
+			System.out.println("Format Error");
+		}
 		
 	}
 
