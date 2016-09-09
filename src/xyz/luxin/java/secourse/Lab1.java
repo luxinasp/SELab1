@@ -145,23 +145,6 @@ class ExpressionTree {
 		this.right = null;
 	}
 	
-	public static boolean checkCharacter(String expString) {
-		
-		char[] chars = expString.toCharArray();
-		
-		for (int i=0; i<chars.length; i++) {
-			if (!((chars[i]=='+') || 
-				(chars[i]=='*') || 
-				(chars[i]>='0'&&chars[i]<='9') || 
-				(chars[i]>='a'&&chars[i]<='z') || 
-				(chars[i]>='A'&&chars[i]<='Z')
-				)) {
-				return false;
-			}
-		}	
-		
-		return true;
-	}
 	
 	public static void createTree(ExpressionTree t, String expString) throws ExpressionException {
 
