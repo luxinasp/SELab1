@@ -223,32 +223,28 @@ public class Lab1 {
 //		String pMonomial = "(" + pFactor + "((\\*)?" + pFactor + ")*)";
 //		String pPolynomial = "(" + pMonomial + "([\\+\\-]" + pMonomial + ")*)";
 		
-		/*
-		Pattern p0 = Pattern.compile("\\^\\d+");
-		Matcher m0 = p0.matcher("^435^45");		
-		if (m0.matches()) {
-			System.out.println("0 Format Right");
-		}
-		*/
+		
+//		String pFactor = "((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
+//		String pMonomial = "(" + pFactor + "((\\*)?" + pFactor + ")*)";
+//		String pPolynomial = "(" + pMonomial + "([\\+\\-]" + pMonomial + ")*)";
+		
+		
+//		String pFactor = "(\\s*((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))\\s*)";
+//		String pMonomial = "(\\s*(" + pFactor + "((\\*)?" + pFactor + ")*)\\s*)";
+//		String pPolynomial = "(\\s*(" + pMonomial + "([\\+\\-]" + pMonomial + ")*)\\s*)";
 		
 		String pFactor = "((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
-		String pMonomial = "(" + pFactor + "((\\*)?" + pFactor + ")*)";
-		String pPolynomial = "(" + pMonomial + "([\\+\\-]" + pMonomial + ")*)";
+		String pMonomial = "(" + pFactor + "(\\s*(\\*)?\\s*" + pFactor + ")*)";
+		String pPolynomial = "(\\s*(" + pMonomial + "(\\s*[\\+\\-]\\s*" + pMonomial + ")*)\\s*)";
 		
 		//String str = "8*ferfre34^67gfgf6ferfg^5345-2*py96-9lk7p9*90*p96*70+i-9u*po3ok*9-6+2-3*x*3y*7+14+x3*x*y+y-i*o";
-		String str = "89*yu^90*ui*op^7*u^8+ad*90*k^2*9*u*8^9*u";
+		//String str = " 89 yu^90 	*ui*	op^7 *u^8	+ad	90*	k^2*9*u*	8^9	*u	";
+		String str = "2- 3 x*y +6*x^2y^4*z-y 	y*y	- z^7 ";
 		Pattern p = Pattern.compile(pPolynomial);
-		Matcher m = p.matcher(str);		
-		/*
-		if (m1.matches()) {
-			System.out.println("YES");
-		} else {
-			System.out.println("NO");
-		}
-		*/
+		Matcher m = p.matcher(str);	
 		
-		//Pattern p = Pattern.compile(pPolynomial);
-		//Matcher m = p.matcher("y+k*7+i+2+3*x*y*7+4+x*x*y+y*i*o");
+		Pattern pOp = Pattern.compile("([\\+\\-])");
+		Matcher mOp = pOp.matcher(str);
 		
 		System.out.println(str);
 		
@@ -258,8 +254,23 @@ public class Lab1 {
 			Pattern p1 = Pattern.compile(pMonomial);
 			Matcher m1 = p1.matcher(str);
 			
-			while (m1.find()) {
+			if (m1.find()) {
 				System.out.print(m1.group(0));
+				System.out.print(" : ");
+				
+				Pattern p2 = Pattern.compile(pFactor);
+				Matcher m2 = p2.matcher(m1.group(0));
+				
+				while (m2.find()) {
+					System.out.print(m2.group(0));
+					System.out.print("  ");
+				}
+				
+				System.out.println();
+			}
+			
+			while (m1.find() && mOp.find()) {
+				System.out.print(mOp.group(0) + "#" + m1.group(0));
 				System.out.print(" : ");
 				
 				Pattern p2 = Pattern.compile(pFactor);
