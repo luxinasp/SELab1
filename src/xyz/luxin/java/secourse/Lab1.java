@@ -49,12 +49,14 @@ class Monomial extends Expression implements Comparable<Monomial> {
 	public int constVaule;
 	public int varNumber;
 	public TreeMap<String, Integer> varIndex;
+	public int monIndex;
 	
 	public Monomial(String expString) throws ExpressionException {
 		
 		constVaule = 1;
 		varNumber = 0;
 		varIndex = new TreeMap<String, Integer>();
+		monIndex  = 0;
 	
 		
 		String pFactor = "(\\d+|[a-zA-Z])";
@@ -78,6 +80,7 @@ class Monomial extends Expression implements Comparable<Monomial> {
 					} else {
 						varIndex.put(m2.group(0), 1);
 					}
+					monIndex++;
 				}
 			} else {
 				constVaule = constVaule * Integer.parseInt(m2.group(0));
@@ -131,6 +134,30 @@ class Monomial extends Expression implements Comparable<Monomial> {
 	@Override
 	public int compareTo(Monomial o) {
 		// TODO Auto-generated method stub
+		
+		//monomial index
+		if (this.monIndex > o.monIndex) {
+			return 1;
+		} else if (this.monIndex < o.monIndex) {
+			return -1;
+		} else {
+			//var number
+			if (this.varNumber > o.varNumber) {
+				return 1;
+			} else if (this.varNumber < o.varNumber) {
+				return -1;
+			} else {
+				if (this.monIndex > o.monIndex) {
+					return 1;
+				} else if (this.monIndex < o.monIndex) {
+					
+				} else {
+					
+				}
+			}
+		}
+		
+		
 		return 0;
 	}
 }
@@ -180,6 +207,7 @@ public class Lab1 {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 
+		/*
 		System.out.println("y+k*70+i+2+3*x*y*7+14+x*x*y+y*i*o");
 		try {
 			analysisPolynomial("y+k*70+i+2+3*x*y*7+14+x*x*y+y*i*o");
@@ -188,7 +216,66 @@ public class Lab1 {
 			System.out.println("ERROR: " + e.getMessage());
 			return;
 		}
+		*/
 		
+		
+//		String pFactor = "(\\d+|[a-zA-Z]+)";
+//		String pMonomial = "(" + pFactor + "((\\*)?" + pFactor + ")*)";
+//		String pPolynomial = "(" + pMonomial + "([\\+\\-]" + pMonomial + ")*)";
+		
+		/*
+		Pattern p0 = Pattern.compile("\\^\\d+");
+		Matcher m0 = p0.matcher("^435^45");		
+		if (m0.matches()) {
+			System.out.println("0 Format Right");
+		}
+		*/
+		
+		String pFactor = "((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
+		String pMonomial = "(" + pFactor + "((\\*)?" + pFactor + ")*)";
+		String pPolynomial = "(" + pMonomial + "([\\+\\-]" + pMonomial + ")*)";
+		
+		//String str = "8*ferfre34^67gfgf6ferfg^5345-2*py96-9lk7p9*90*p96*70+i-9u*po3ok*9-6+2-3*x*3y*7+14+x3*x*y+y-i*o";
+		String str = "89*yu^90*ui*op^7*u^8+ad*90*k^2*9*u*8^9*u";
+		Pattern p = Pattern.compile(pPolynomial);
+		Matcher m = p.matcher(str);		
+		/*
+		if (m1.matches()) {
+			System.out.println("YES");
+		} else {
+			System.out.println("NO");
+		}
+		*/
+		
+		//Pattern p = Pattern.compile(pPolynomial);
+		//Matcher m = p.matcher("y+k*7+i+2+3*x*y*7+4+x*x*y+y*i*o");
+		
+		System.out.println(str);
+		
+		if (m.matches()) {
+			System.out.println("Format Right");
+			
+			Pattern p1 = Pattern.compile(pMonomial);
+			Matcher m1 = p1.matcher(str);
+			
+			while (m1.find()) {
+				System.out.print(m1.group(0));
+				System.out.print(" : ");
+				
+				Pattern p2 = Pattern.compile(pFactor);
+				Matcher m2 = p2.matcher(m1.group(0));
+				
+				while (m2.find()) {
+					System.out.print(m2.group(0));
+					System.out.print("  ");
+				}
+				
+				System.out.println("");
+			}
+	
+		} else {
+			System.out.println("Format Error");
+		}
 	}
 
 }
