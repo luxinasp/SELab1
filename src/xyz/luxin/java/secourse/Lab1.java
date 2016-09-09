@@ -26,6 +26,23 @@ class Monomial implements Comparable<Monomial> {
 	public TreeMap<String, Integer> varIndex;
 	public int monIndex;
 	
+	
+	public Monomial() {
+		// TODO Auto-generated constructor stub
+		constVaule = 1;
+		varNumber = 0;
+		varIndex = new TreeMap<String, Integer>();
+		monIndex = 0;
+	}
+	
+	public Monomial(Monomial o) {
+		// TODO Auto-generated constructor stub
+		this.constVaule = o.constVaule;
+		this.varNumber = o.varNumber;
+		this.varIndex = new TreeMap<String, Integer>(o.varIndex);
+		this.monIndex = o.monIndex;
+	}
+	
 	public Monomial(String expString, boolean isExtraNegative) throws ExpressionException {
 		
 		constVaule = 1;
@@ -99,13 +116,29 @@ class Monomial implements Comparable<Monomial> {
 		return;
 	}
 	
-//	public Monomial() {
-//		// TODO Auto-generated constructor stub
-//		varIndex = new TreeMap<String, Integer>();
-//	}
+	public Monomial derivative(String var) {
+		
+		Monomial result = new Monomial();
 
-	public Monomial derivative() {
-		return null;
+		if (!varIndex.containsKey(var)) {
+			result.constVaule = 0;
+			return result;
+		}
+		
+		
+		result = new Monomial(this);
+		
+		if (result.varIndex.get(var)==1) {
+			result.varIndex.remove(var);
+			result.varNumber--;
+			result.monIndex--;
+			return result;
+		}
+		
+		result.monIndex--;
+		result.constVaule = result.constVaule * result.varIndex.get(var);
+		result.varIndex.replace(var, result.varIndex.get(var)-1);
+		return result;
 	}
 	
 	public Monomial simplify(TreeMap<String, Integer> pairs) {
@@ -223,12 +256,10 @@ class Polynomial {
 				Integer n = mMonos.get(mono);
 				mono.constVaule = mono.constVaule + n;
 				mMonos.remove(mono);
-				if (mono.constVaule != 0) {
-					mMonos.put(mono, mono.constVaule);
-				}
-			} else {
+			}
+			if (mono.constVaule != 0) {
 				mMonos.put(mono, mono.constVaule);
-			}	
+			}
 		}
 			
 		while (m1.find() && mOp.find()) {
@@ -246,12 +277,10 @@ class Polynomial {
 				Integer n = mMonos.get(mono);
 				mono.constVaule = mono.constVaule + n;
 				mMonos.remove(mono);
-				if (mono.constVaule != 0) {
-					mMonos.put(mono, mono.constVaule);
-				}
-			} else {
+			} 
+			if (mono.constVaule != 0) {
 				mMonos.put(mono, mono.constVaule);
-			}	
+			}
 		}
 		
 		return;
@@ -262,21 +291,22 @@ class Polynomial {
 		
 	}
 	
-	public Polynomial derivative() {
+	public Polynomial derivative(String var) {
 
 		TreeMap<Monomial, Integer> result = new TreeMap<Monomial, Integer>();
 		
 		Iterator<Entry<Monomial, Integer>> it = mMonos.entrySet().iterator();
 		while (it.hasNext()) {
 			Entry<Monomial, Integer> entry = (Entry<Monomial, Integer>)it.next();
-			Monomial m = entry.getKey().derivative();
+			Monomial m = entry.getKey().derivative(var);
 			
 			if (result.containsKey(m)) {
 				//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
 				Integer n = result.get(m);
 				m.constVaule = m.constVaule + n;
-				result.replace(m, m.constVaule);
-			} else {
+				result.remove(m);
+			}
+			if (m.constVaule != 0) {
 				result.put(m, m.constVaule);
 			}
 		}
@@ -321,13 +351,12 @@ public class Lab1 {
 		try {
 			poly.expression("12- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 - 9 -		22y*x*z");
 			System.out.println(poly);
+			System.out.println(poly.derivative("x").derivative("z").derivative("y"));
 		} catch (ExpressionException e) {
 			// TODO Auto-generated catch block
 			System.out.println(e.getMessage());
 			return;
 		}
-		
-		//reference("2- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 + 9 -		22y*x*z");
 	}
 	
 	public static void testTreeMap() {
