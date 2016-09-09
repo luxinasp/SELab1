@@ -52,9 +52,49 @@ class Monomial implements Comparable<Monomial> {
 		Matcher m2 = p2.matcher(expString);
 		
 		while (m2.find()) {
-			//m2.group(0)
-			//...
+			String str = m2.group(0);
+			char[] chars = str.toCharArray();
+			if (chars[0]>='0' && chars[0]<='9') {
+				//number
+				if (str.contains("^")) {
+					String[] nums = str.split("\\^");
+					if (nums.length != 2) {
+						throw new ExpressionException("Format Error");
+					}
+					
+					constVaule *= (int)Math.pow(Integer.parseInt(nums[0]), Integer.parseInt(nums[1]));
+				} else {
+					constVaule *= Integer.parseInt(str);
+				}
+			} else {
+				//var
+				if (str.contains("^")) {
+					String[] pair = str.split("\\^");
+					if (pair.length != 2) {
+						throw new ExpressionException("Format Error");
+					}
+					
+					if (varIndex.containsKey(pair[0])) {
+						varIndex.replace(pair[0], varIndex.get(pair[0])+Integer.parseInt(pair[1]));
+					} else {
+						varIndex.put(pair[0], Integer.parseInt(pair[1]));
+					}
+					
+					monIndex += Integer.parseInt(pair[1]);
+					
+				} else {
+					if (varIndex.containsKey(str)) {
+						varIndex.replace(str, varIndex.get(str)+1);
+					} else {
+						varIndex.put(str, 1);
+					}
+					
+					monIndex++;
+				}
+			}
 		}
+		
+		varNumber = varIndex.size();
 		
 		return;
 	}
