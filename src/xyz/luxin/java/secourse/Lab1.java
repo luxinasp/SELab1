@@ -222,7 +222,10 @@ class Polynomial {
 				//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
 				Integer n = mMonos.get(mono);
 				mono.constVaule = mono.constVaule + n;
-				mMonos.replace(mono, mono.constVaule);
+				mMonos.remove(mono);
+				if (mono.constVaule != 0) {
+					mMonos.put(mono, mono.constVaule);
+				}
 			} else {
 				mMonos.put(mono, mono.constVaule);
 			}	
@@ -242,7 +245,10 @@ class Polynomial {
 				//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
 				Integer n = mMonos.get(mono);
 				mono.constVaule = mono.constVaule + n;
-				mMonos.replace(mono, mono.constVaule);
+				mMonos.remove(mono);
+				if (mono.constVaule != 0) {
+					mMonos.put(mono, mono.constVaule);
+				}
 			} else {
 				mMonos.put(mono, mono.constVaule);
 			}	
@@ -313,7 +319,7 @@ public class Lab1 {
 		
 		Polynomial poly = new Polynomial();
 		try {
-			poly.expression("2- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 + 9 -		22y*x*z");
+			poly.expression("12- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 - 9 -		22y*x*z");
 			System.out.println(poly);
 		} catch (ExpressionException e) {
 			// TODO Auto-generated catch block
