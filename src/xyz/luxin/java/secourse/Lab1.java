@@ -34,7 +34,7 @@ class Monomial implements Comparable<Monomial> {
 		monIndex = 0;
 		
 		if (isExtraNegative) {
-			constVaule = -constVaule;
+			constVaule = -1;
 		}
 		
 		String pFactor = "((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
@@ -99,10 +99,10 @@ class Monomial implements Comparable<Monomial> {
 		return;
 	}
 	
-	public Monomial() {
-		// TODO Auto-generated constructor stub
-		varIndex = new TreeMap<String, Integer>();
-	}
+//	public Monomial() {
+//		// TODO Auto-generated constructor stub
+//		varIndex = new TreeMap<String, Integer>();
+//	}
 
 	public Monomial derivative() {
 		return null;
@@ -122,10 +122,13 @@ class Monomial implements Comparable<Monomial> {
 		
 		String result = "";
 		
-		if (constVaule != 1) {
+		if (constVaule == -1) {
+			result += "-";
+		} else if (constVaule != 1) {
 			result += String.valueOf(constVaule);
 			result += "*";
 		}
+		
 		
 		Iterator<Entry<String, Integer>> it = varIndex.entrySet().iterator();
 		while (it.hasNext()) {
@@ -164,21 +167,18 @@ class Monomial implements Comparable<Monomial> {
 				Iterator<Entry<String, Integer>> it2 = o.varIndex.entrySet().iterator();
 				while (it1.hasNext() && it2.hasNext()) {
 					Entry<String, Integer> entry1 = (Entry<String, Integer>)it1.next();
-					Entry<String, Integer> entry2 = (Entry<String, Integer>)it1.next();
+					Entry<String, Integer> entry2 = (Entry<String, Integer>)it2.next();
 					String key1 = entry1.getKey();
 					String key2 = entry2.getKey();
 					if (key1.compareTo(key2) > 0) {
 						return 1;
 					} else if (key1.compareTo(key2) < 0) {
 						return -1;
-					} else {
-						continue;
 					}
 				}
+				return 0;
 			}
 		}
-		
-		return 0;
 	}
 }
 
@@ -231,8 +231,8 @@ class Polynomial {
 		while (m1.find() && mOp.find()) {
 
 			boolean isExtraNegative = false;
-			
-			if (mOp.group(0)=="-") {
+
+			if (mOp.group(0).equals("-")) {
 				isExtraNegative = true;
 			}
 			
@@ -281,7 +281,24 @@ class Polynomial {
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
-		return super.toString();
+		String result = new String("");
+		
+		Iterator<Entry<Monomial, Integer>> it = mMonos.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<Monomial, Integer> entry = (Entry<Monomial, Integer>)it.next();
+			Monomial m = entry.getKey();
+			if (m.constVaule < 0) {
+				result = result + m.toString();
+			} else if (m.constVaule > 0) {
+				result = result + "+" + m.toString();
+			}
+		}
+		
+		if ((result.toCharArray())[0]=='+') {
+			result = result.substring(1, result.length());
+		}
+		
+		return result;
 	}
 	
 }
@@ -294,12 +311,17 @@ public class Lab1 {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		
-		Monomial m = new Monomial();
-		m.constVaule = -23;
-		m.varNumber = 2;
-		m.varIndex.put("z", 1);
-		m.varIndex.put("x", 1);
-		System.out.println(m);
+		Polynomial poly = new Polynomial();
+		try {
+			poly.expression("2- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 + 9 -		22y*x*z");
+			System.out.println(poly);
+		} catch (ExpressionException e) {
+			// TODO Auto-generated catch block
+			System.out.println(e.getMessage());
+			return;
+		}
+		
+		//reference("2- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 + 9 -		22y*x*z");
 	}
 	
 	public static void testTreeMap() {
@@ -324,7 +346,7 @@ public class Lab1 {
 		return;
 	}
 	
-	public static void reference() {
+	public static void reference(String str) {
 		
 //		String pFactor = "(\\d+|[a-zA-Z]+)";
 //		String pMonomial = "(" + pFactor + "((\\*)?" + pFactor + ")*)";
@@ -340,7 +362,7 @@ public class Lab1 {
 //		String pMonomial = "(\\s*(" + pFactor + "((\\*)?" + pFactor + ")*)\\s*)";
 //		String pPolynomial = "(\\s*(" + pMonomial + "([\\+\\-]" + pMonomial + ")*)\\s*)";
 		
-		String str = "2- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 ";
+		//String str = "2- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 ";
 		String pFactor = "((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
 		String pMonomial = "(" + pFactor + "(\\s*(\\*)?\\s*" + pFactor + ")*)";
 		String pPolynomial = "(\\s*(" + pMonomial + "(\\s*[\\+\\-]\\s*" + pMonomial + ")*)\\s*)";
