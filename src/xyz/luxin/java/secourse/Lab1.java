@@ -19,7 +19,30 @@ class ExpressionException extends Exception
 	}
 } 
 
-class Monomial implements Comparable<Monomial> {
+abstract class Expression {
+	//Expression Abstract Class
+}
+
+class Operator extends Expression {
+	
+	public char op;
+	
+	public Operator(char op) throws ExpressionException {
+		if (op=='+' || op=='-' || op=='*' || op=='^') {
+			this.op = op;
+		} else {
+			throw new ExpressionException("Operator Illegal");
+		}
+	}
+	
+	@Override
+	public String toString() {
+		// TODO Auto-generated method stub
+		return String.valueOf(op);
+	}
+}
+
+class Monomial extends Expression implements Comparable<Monomial> {
 	
 	public int constVaule;
 	public int varNumber;
@@ -216,12 +239,17 @@ class Monomial implements Comparable<Monomial> {
 }
 
 
-class Polynomial {
+class Polynomial extends Expression {
 	
 	private TreeMap<Monomial, Integer> mMonos;
 	
 	public Polynomial() {
 		mMonos = new TreeMap<Monomial, Integer>();
+	}
+	
+	public Polynomial(Monomial m) {
+		mMonos = new TreeMap<Monomial, Integer>();
+		mMonos.put(m, m.constVaule);
 	}
 	
 	public Polynomial(TreeMap<Monomial, Integer> monos) {
@@ -312,6 +340,11 @@ class Polynomial {
 		}
 
 		return new Polynomial(result);
+	}
+	
+	public static Polynomial arithmetic(Polynomial p1, Polynomial p2, Operator op) {
+		//
+		return null;
 	}
 
 	@Override
