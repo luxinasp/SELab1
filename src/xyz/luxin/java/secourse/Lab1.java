@@ -351,7 +351,10 @@ public class Lab1 {
 		try {
 			poly.expression("12- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 - 9 -		22y*x*z");
 			System.out.println(poly);
+			System.out.println(poly.derivative("x"));
+			System.out.println(poly.derivative("x").derivative("z"));
 			System.out.println(poly.derivative("x").derivative("z").derivative("y"));
+			System.out.println(poly.derivative("x").derivative("z").derivative("y").derivative("y"));
 		} catch (ExpressionException e) {
 			// TODO Auto-generated catch block
 			System.out.println(e.getMessage());
