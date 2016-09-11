@@ -2,7 +2,6 @@ package xyz.luxin.java.secourse;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
-import java.util.Stack;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -22,7 +21,7 @@ abstract class Expression {
 	//Expression Abstract Class
 }
 
-/*
+
 class ExpressionTree {
 
 	public Expression exp;
@@ -35,90 +34,112 @@ class ExpressionTree {
 		this.father = null;
 	}
 	
-	public static boolean checkCharacter(String expString) {
+	public Polynomial obtainPolynomial() {
 		
-		char[] chars = expString.toCharArray();
-		
-		for (int i=0; i<chars.length; i++) {
-			if (!((chars[i]=='+') || 
-				(chars[i]=='*') || 
-				(chars[i]>='0'&&chars[i]<='9') || 
-				(chars[i]>='a'&&chars[i]<='z') || 
-				(chars[i]>='A'&&chars[i]<='Z')
-				)) {
-				return false;
-			}
-		}	
-		
-		return true;
+		return null;
 	}
 	
 	public static void createTree(ExpressionTree t, String expString) throws ExpressionException {
-
+		
+		System.out.println(expString);
+		
+		Pattern p;
+		Matcher m;
 		char[] chars = expString.toCharArray();
 		
-		if (chars.length == 1) {
-			if (chars[0]=='+' || chars[0]=='*') {
-				throw new ExpressionException("Format Error");
-			} 
-			//it is leaf
-			t.exp = new Monomial(expString);
+		//no bracket
+		if (!expString.contains("(") && !expString.contains(")")) {
+			t.exp = new Polynomial(expString, true);
 			return;
 		}
 		
-		if (chars.length == 2) {
-			if (!(chars[0]>='0'&&chars[0]<='9'&&chars[1]>='0'&&chars[1]<='9')) {
-				throw new ExpressionException("Format Error");
-			}
-			//it is leaf
-			t.exp = new Monomial(expString);
+		//check only both ends bracket
+		p = Pattern.compile("\\s*\\(([^\\(\\)]*)\\)\\s*");
+		m = p.matcher(expString);
+		if (m.matches()) {
+			t.exp = new Polynomial(m.group(1), true);
 			return;
 		}
 		
-
-		//Find middle near +
-		
-		int i = chars.length/2;
-		int j = chars.length/2;
-
-		while (i>=0 || j<=chars.length-1) {
+		//remove both ends paired bracket
+		p = Pattern.compile("\\s*\\((.*)\\)\\s*");
+		m = p.matcher(expString);
+		if (m.matches()) {
+			//check paired
+			boolean flag = true;
+			char[] tmpChars = m.group(1).toCharArray();
+			int count = 0;
 			
-			if (i>=0 && chars[i]=='+') {
-				if (i==0) {
-					throw new ExpressionException("Format Error");
-				} else {
-					t.exp = new Operator('+');
-					t.left = new ExpressionTree();
-					t.right = new ExpressionTree();
-					createTree(t.left, new String(chars, 0, i));
-					createTree(t.right, new String(chars, i+1, chars.length-i-1));
-					return;
+			for (int i=0; i<m.group(1).length(); i++) {
+				if (tmpChars[i]=='(') {
+					count++;
+				}
+				if (tmpChars[i]==')') {
+					count--;
+				}
+				if (count < 0) {
+					flag = false;
 				}
 			}
-
-			if (j<=chars.length-1 && chars[j]=='+') {
-				if (j==chars.length-1) {
-					throw new ExpressionException("Format Error");
-				} else {
-					t.exp = new Operator('+');
-					t.left = new ExpressionTree();
-					t.right = new ExpressionTree();
-					createTree(t.left, new String(chars, 0, j));
-					createTree(t.right, new String(chars, j+1, chars.length-j-1));
-					return;
-				}
+			if (count != 0) {
+				throw new ExpressionException("Bracket Error");
 			}
 			
-			i--;
-			j++;
+			if (flag) {
+				expString = m.group(1);
+				chars = expString.toCharArray();
+			}
 		}
 		
+		//find available op
+		int opIndex = -1;
+		int opLevel = 0;
+		int level = 0;
+		for (int i=0; i<chars.length; i++) {
+			if (chars[i]=='+') {
+				if (level + 3  > opLevel) {
+					opIndex = i;
+					opLevel = level + 3;
+				}
+			}
+			if (chars[i]=='*') {
+				if (level + 2  > opLevel) {
+					opIndex = i;
+					opLevel = level + 2;
+				}
+			}
+			if (chars[i]=='^') {
+				if (level + 1  > opLevel) {
+					opIndex = i;
+					opLevel = level + 1;
+				}
+			}
+			if (chars[i]=='(') {
+				level = level - 4;
+			}
+			if (chars[i]==')') {
+				level = level + 4;
+			}
+		}
 		
-		//no +, it is leaf
-		t.exp = new Monomial(expString);
+		if (opIndex == -1) {
+			//t.exp = new Polynomial(expString);
+			throw new ExpressionException("Format Error");
+		} else {
+			t.exp = new Operator(chars[opIndex]);
+			t.left = new ExpressionTree();
+			t.right = new ExpressionTree();
+			t.left.father = t;
+			t.right.father = t;
+			String left = expString.substring(0, opIndex);
+			String right = expString.substring(opIndex+1, expString.length());
+			createTree(t.left, left);
+			createTree(t.right, right);
+		}
+
 		return;
 	}
-	
+
 	public static void preOrder(ExpressionTree t) {
 		if(null != t) {
 			System.out.print(t.exp + " ");
@@ -130,7 +151,11 @@ class ExpressionTree {
 	public static void midOrder(ExpressionTree t) {
 		if(null != t) {
 			midOrder(t.left);
-			System.out.print(t.exp + " ");
+			if (t.exp instanceof Operator) {
+				System.out.print(" " + t.exp + " ");
+			} else {
+				System.out.print("(" + t.exp + ")");
+			}
 			midOrder(t.right);
 		}
 	}
@@ -143,7 +168,7 @@ class ExpressionTree {
 		}
 	}
 }
-*/
+
 
 class Operator extends Expression {
 	
@@ -159,7 +184,6 @@ class Operator extends Expression {
 	
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
 		return String.valueOf(op);
 	}
 }
@@ -189,7 +213,16 @@ class Monomial extends Expression implements Comparable<Monomial> {
 		this.monIndex = o.monIndex;
 	}
 	
-	public Monomial(String expString, boolean isExtraNegative) throws ExpressionException {
+	public Monomial(String expString, boolean isExtraNegative, boolean isNegEx) throws ExpressionException {
+		
+		if (!isNegEx) {
+			//check character
+			Pattern p0 = Pattern.compile("[^a-zA-Z0-9\\+\\-\\*\\^\\(\\)\\s]");
+			Matcher m0 = p0.matcher(expString);	
+			if (m0.find()) {
+				throw new ExpressionException("Unknown Character");
+			}
+		}
 		
 		constVaule = 1;
 		varNumber = 0;
@@ -200,7 +233,7 @@ class Monomial extends Expression implements Comparable<Monomial> {
 			constVaule = -1;
 		}
 		
-		String pFactor = "((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
+		String pFactor = "(#|(\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
 		String pMonomial = "(" + pFactor + "(\\s*(\\*)?\\s*" + pFactor + ")*)";
 		
 		Pattern p1 = Pattern.compile(pMonomial);
@@ -217,7 +250,9 @@ class Monomial extends Expression implements Comparable<Monomial> {
 		while (m2.find()) {
 			String str = m2.group(0);
 			char[] chars = str.toCharArray();
-			if (chars[0]>='0' && chars[0]<='9') {
+			if (chars[0]=='#') {
+				constVaule *= -1;
+			} else if (chars[0]>='0' && chars[0]<='9') {
 				//number
 				if (str.contains("^")) {
 					String[] nums = str.split("\\^");
@@ -260,6 +295,11 @@ class Monomial extends Expression implements Comparable<Monomial> {
 		varNumber = varIndex.size();
 		
 		return;
+	}
+	
+	public Monomial(String expString, boolean isExtraNegative) throws ExpressionException {
+		//Does not support "Negative Extension"(#) by default.
+		this(expString, isExtraNegative, false);
 	}
 	
 	public Monomial simplify(TreeMap<String, Integer> pairs) {
@@ -390,9 +430,18 @@ class Polynomial extends Expression {
 		mMonos = new TreeMap<Monomial, Integer>();
 	}
 	
-	public Polynomial(String expString) throws ExpressionException {
+	public Polynomial(String expString, boolean isNegEx) throws ExpressionException {
 		mMonos = new TreeMap<Monomial, Integer>();
-		expression(expString);
+		if (isNegEx) {
+			expression(expString, true);
+		} else {
+			expression(expString, false);
+		}
+	}
+	
+	public Polynomial(String expString) throws ExpressionException {
+		//Does not support "Negative Extension"(#) by default.
+		this(expString, false);
 	}
 	
 	public Polynomial(Monomial m) {
@@ -406,14 +455,19 @@ class Polynomial extends Expression {
 	
 	public void expressionBracket(String expString) throws ExpressionException {
 		
+		Pattern p;
+		Matcher m;
+		StringBuffer sb;
 		char[] chars = expString.toCharArray();
 
+		
 		//check character
 		Pattern p1 = Pattern.compile("[^a-zA-Z0-9\\+\\-\\*\\^\\(\\)\\s]");
 		Matcher m1 = p1.matcher(expString);	
 		if (m1.find()) {
 			throw new ExpressionException("Unknown Character");
 		}
+		
 		
 		//check bracket
 		int count = 0;
@@ -432,46 +486,88 @@ class Polynomial extends Expression {
 			throw new ExpressionException("Bracket Error");
 		}
 		
+		
 		//fix bracket *
-		Pattern p2 = Pattern.compile("(\\d+|[a-zA-Z]+)\\s*\\(");
-		Matcher m2 = p2.matcher(expString);	
-		StringBuffer sb2 = new StringBuffer();
-		while(m2.find()){
-			String str = m2.group().replaceAll("\\(", "*(");
-			m2.appendReplacement(sb2, str);
+		p = Pattern.compile("(\\d+|[a-zA-Z]+)\\s*\\(");
+		m = p.matcher(expString);	
+		sb = new StringBuffer();
+		while(m.find()) {
+			String str = m.group().replaceAll("\\(", "*(");
+			m.appendReplacement(sb, str);
 		}
-		m2.appendTail(sb2);
-		expString = sb2.toString();
+		m.appendTail(sb);
+		expString = sb.toString();
+		chars = expString.toCharArray();
 		
-		
-		Pattern p3 = Pattern.compile("\\)\\s*(\\d+|[a-zA-Z]+)");
-		Matcher m3 = p3.matcher(expString);	
-		StringBuffer sb3 = new StringBuffer();
-		while(m3.find()){
-			String str = m3.group().replaceAll("\\)", ")*");
-			m3.appendReplacement(sb3, str);
+		p = Pattern.compile("\\)\\s*(\\d+|[a-zA-Z]+)");
+		m = p.matcher(expString);	
+		sb = new StringBuffer();
+		while(m.find()) {
+			String str = m.group().replaceAll("\\)", ")*");
+			m.appendReplacement(sb, str);
 		}
-		m3.appendTail(sb3);
-		expString = sb3.toString();
+		m.appendTail(sb);
+		expString = sb.toString();
+		chars = expString.toCharArray();
 		
-		
-		Pattern p4 = Pattern.compile("\\)\\s+\\(");
-		Matcher m4 = p4.matcher(expString);	
-		StringBuffer sb4 = new StringBuffer();
-		while(m4.find()){
-			String str = m4.group().replaceAll("\\)", ")*");
-			m4.appendReplacement(sb4, str);
+		p = Pattern.compile("\\)\\s*\\(");
+		m = p.matcher(expString);	
+		sb = new StringBuffer();
+		while(m.find()) {
+			String str = m.group().replaceAll("\\)", ")*");
+			m.appendReplacement(sb, str);
 		}
-		m4.appendTail(sb4);
-		expString = sb4.toString();
+		m.appendTail(sb);
+		expString = sb.toString();
+		chars = expString.toCharArray();
 		
-		System.out.println(expString);
-		throw new ExpressionException("Break Point");
+		
+		//check - and fix - to +#*
+		int realCount = 0;
+		for (int i=0; i<chars.length; i++) {
+			if (chars[i]=='-') {
+				realCount++;
+			}
+		}
+		
+		int matchCount = 0;
+		p = Pattern.compile("(\\d+|[a-zA-Z]+|\\))\\s*\\-\\s*(\\d+|[a-zA-Z]+|\\()");
+		m = p.matcher(expString);	
+		sb = new StringBuffer();
+		while(m.find()) {
+			String str = m.group().replaceAll("\\-", "+#*");
+			m.appendReplacement(sb, str);
+			matchCount++;
+		}
+		m.appendTail(sb);
+		expString = sb.toString();
+		chars = expString.toCharArray();
+		
+		if (realCount != matchCount) {
+			throw new ExpressionException("Format Error");
+		}
+		
+//		System.out.println(expString);
+//		throw new ExpressionException("Break Point");
+		
+		ExpressionTree tree = new ExpressionTree();
+		ExpressionTree.createTree(tree, expString);
+		//this.mMonos = tree.obtainPolynomial().mMonos;
+		ExpressionTree.midOrder(tree);
 	}
 	
-	public void expression(String expString) throws ExpressionException {
+	public void expression(String expString, boolean isNegEx) throws ExpressionException {
 		
-		String pFactor = "((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
+		if (!isNegEx) {
+			//check character
+			Pattern p0 = Pattern.compile("[^a-zA-Z0-9\\+\\-\\*\\^\\(\\)\\s]");
+			Matcher m0 = p0.matcher(expString);	
+			if (m0.find()) {
+				throw new ExpressionException("Unknown Character");
+			}
+		}
+		
+		String pFactor = "(#|(\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
 		String pMonomial = "(" + pFactor + "(\\s*(\\*)?\\s*" + pFactor + ")*)";
 		String pPolynomial = "(\\s*(" + pMonomial + "(\\s*[\\+\\-]\\s*" + pMonomial + ")*)\\s*)";
 		
@@ -488,9 +584,8 @@ class Polynomial extends Expression {
 			
 		Pattern p1 = Pattern.compile(pMonomial);
 		Matcher m1 = p1.matcher(expString);
-		
 		if (m1.find()) {	
-			Monomial mono = new Monomial(m1.group(0), false);
+			Monomial mono = new Monomial(m1.group(0), false, isNegEx);
 			
 			if (mMonos.containsKey(mono)) {
 				//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
@@ -511,7 +606,7 @@ class Polynomial extends Expression {
 				isExtraNegative = true;
 			}
 			
-			Monomial mono = new Monomial(m1.group(0), isExtraNegative);
+			Monomial mono = new Monomial(m1.group(0), isExtraNegative, isNegEx);
 			
 			if (mMonos.containsKey(mono)) {
 				//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
@@ -524,6 +619,12 @@ class Polynomial extends Expression {
 			}
 		}
 		
+		return;
+	}
+	
+	public void expression(String expString) throws ExpressionException {
+		//Does not support "Negative Extension"(#) by default.
+		expression(expString, false);
 		return;
 	}
 	
@@ -615,6 +716,7 @@ public class Lab1 {
 		// TODO Auto-generated method stub
 		
 		try {
+			/*
 			Polynomial poly = new Polynomial("12-3z*xx*yyy +6*xx^2yyy^4*z-yyy yyy*yyy- z^7 - 9 -22yyy*xx*z");
 			System.out.println(poly);
 			System.out.println(poly.derivative("xx"));
@@ -638,13 +740,22 @@ public class Lab1 {
 			vars2.put("yyy", 1);
 			System.out.println(poly.simplify(vars2).simplify(vars2));
 			System.out.println();
+			*/
+			
+//			String a = "	# ";
+//			Pattern p1 = Pattern.compile("\\s*(#)\\s*");
+//			Matcher m1 = p1.matcher(a);
+//			if (m1.matches()) {
+//				System.out.println(m1.group(1));
+//				return;
+//			}
 			
 			
 			Polynomial poly2 = new Polynomial();
-			poly2.expressionBracket("2+7x7yt(x+  t(6+9(7*9)) + 6(c+c))");
-			
+			poly2.expressionBracket("2	+7x7yt(x+  t(6+9(7*9)) + 6 	(g-6)(2-(z-x)+6(x-z))(c+c))");
+
 		} catch (ExpressionException e) {
-			// TODO Auto-generated catch block
+			e.printStackTrace();
 			System.out.println(e.getMessage());
 			return;
 		}
