@@ -25,23 +25,36 @@ abstract class Expression {
 class ExpressionTree {
 
 	public Expression exp;
-	public ExpressionTree left, right, father;
+	public ExpressionTree left, right;//, father;
 	
 	public ExpressionTree() {
 		this.exp = null;
 		this.left = null;
 		this.right = null;
-		this.father = null;
+		//this.father = null;
 	}
 	
-	public Polynomial obtainPolynomial() {
+	public static Polynomial obtainPolynomial(ExpressionTree t) throws ExpressionException  {
 		
+		if(t != null) {
+			obtainPolynomial(t.left);
+			obtainPolynomial(t.right);
+			if (t.exp instanceof Operator) {
+				if (!(t.left.exp instanceof Polynomial) || !(t.right.exp instanceof Polynomial)) {
+					throw new ExpressionException("Internal Error");
+				}
+				t.exp = Polynomial.arithmetic((Polynomial)t.left.exp, (Polynomial)t.right.exp, (Operator)t.exp);
+				t.left = null;
+				t.right = null;
+				return (Polynomial)t.exp;
+			}
+		}
 		return null;
 	}
 	
 	public static void createTree(ExpressionTree t, String expString) throws ExpressionException {
 		
-		System.out.println(expString);
+		//System.out.println(expString);
 		
 		Pattern p;
 		Matcher m;
@@ -129,8 +142,8 @@ class ExpressionTree {
 			t.exp = new Operator(chars[opIndex]);
 			t.left = new ExpressionTree();
 			t.right = new ExpressionTree();
-			t.left.father = t;
-			t.right.father = t;
+			//t.left.father = t;
+			//t.right.father = t;
 			String left = expString.substring(0, opIndex);
 			String right = expString.substring(opIndex+1, expString.length());
 			createTree(t.left, left);
@@ -165,6 +178,7 @@ class ExpressionTree {
 			System.out.print(t.exp + " ");
 		}
 	}
+	
 }
 
 
@@ -347,6 +361,55 @@ class Monomial extends Expression implements Comparable<Monomial> {
 		result.constVaule = result.constVaule * result.varIndex.get(var);
 		result.varIndex.replace(var, result.varIndex.get(var)-1);
 		return result;
+	}
+	
+	public Monomial multiplication(Monomial a){//////////////////////////////////////////////////////////
+		Monomial result1 = new Monomial();
+		result1.constVaule = this.constVaule*a.constVaule;
+		result1.monIndex = 0;
+		TreeMap<String, Integer>result = new TreeMap<String, Integer>();
+
+		Iterator<Entry<String, Integer>> it = this.varIndex.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<String, Integer> entry = (Entry<String, Integer>)it.next();
+			String m = entry.getKey();
+			int nAll = this.varIndex.get(m);
+			result1.monIndex += nAll;
+			if (result.containsKey(m)) {
+				//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
+				Integer n = result.get(m);
+				nAll += n;
+				result.remove(m);
+			}
+			if (nAll != 0) {
+				result.put(m, nAll);
+			}
+		}
+
+		//System.out.println(a.toString());
+		Iterator<Entry<String, Integer>> it1 = a.varIndex.entrySet().iterator();
+		while (it1.hasNext()) {
+			Entry<String, Integer> entry = (Entry<String, Integer>)it1.next();
+			String m = entry.getKey();
+			int nAll = a.varIndex.get(m);
+			result1.monIndex += nAll;
+			if (result.containsKey(m)) {
+				//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
+				Integer n = result.get(m);
+				nAll += n;
+				result.remove(m);
+			}
+			if (nAll != 0) {
+				result.put(m, nAll);
+			}
+		}
+		
+		result1.varNumber = result.size();
+		result1.varIndex = result;
+
+
+		return result1;
+		
 	}
 	
 	@Override
@@ -550,8 +613,20 @@ class Polynomial extends Expression {
 		
 		ExpressionTree tree = new ExpressionTree();
 		ExpressionTree.createTree(tree, expString);
-		//this.mMonos = tree.obtainPolynomial().mMonos;
+		
+		System.out.print("midOrder: ");
 		ExpressionTree.midOrder(tree);
+		System.out.println();
+		
+		System.out.print("preOrder: ");
+		ExpressionTree.preOrder(tree);
+		System.out.println();
+		
+		System.out.print("lastOrder: ");
+		ExpressionTree.lastOrder(tree);
+		System.out.println();
+		
+		this.mMonos = ExpressionTree.obtainPolynomial(tree).mMonos;
 	}
 	
 	public void expression(String expString, boolean isNegEx) throws ExpressionException {
@@ -672,9 +747,103 @@ class Polynomial extends Expression {
 		return new Polynomial(result);
 	}
 	
-	public static Polynomial arithmetic(Polynomial p1, Polynomial p2, Operator op) {
+	
+	
+	public static Polynomial add(Polynomial p1, Polynomial p2){
+		
+		TreeMap<Monomial, Integer> result = new TreeMap<Monomial, Integer>();
+		
+		Iterator<Entry<Monomial, Integer>> p1_it = p1.mMonos.entrySet().iterator();
+		while (p1_it.hasNext()) {
+			Entry<Monomial, Integer> entry = (Entry<Monomial, Integer>)p1_it.next();
+			Monomial m = new Monomial(entry.getKey());
+			
+			if (result.containsKey(m)) {
+				//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
+				Integer n = result.get(m);
+				m.constVaule = m.constVaule + n;
+				result.remove(m);
+			}
+			if (m.constVaule != 0) {
+				result.put(m, m.constVaule);
+			}
+		}
+		//System.out.println(p2.toString());
+		Iterator<Entry<Monomial, Integer>> p2_it = p2.mMonos.entrySet().iterator();
+		while (p2_it.hasNext()) {
+			Entry<Monomial, Integer> entry = (Entry<Monomial, Integer>)p2_it.next();
+			Monomial m = new Monomial(entry.getKey());
+
+			if (result.containsKey(m)) {
+				//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
+				Integer n = result.get(m);
+				m.constVaule = m.constVaule + n;
+				result.remove(m);
+			}
+			if (m.constVaule != 0) {
+				result.put(m, m.constVaule);
+			}
+		}
+		return new Polynomial(result);
+	}
+
+	public static Polynomial multiplication(Polynomial p1, Polynomial p2){
+		
+		TreeMap<Monomial, Integer> result = new TreeMap<Monomial, Integer>();
+			
+		Iterator<Entry<Monomial, Integer>> p1_it = p1.mMonos.entrySet().iterator();
+		while (p1_it.hasNext()) {
+			Entry<Monomial, Integer> p1Entry = (Entry<Monomial, Integer>)p1_it.next();
+			Monomial m1 = p1Entry.getKey();
+			//System.out.println(m1.toString());
+			Iterator<Entry<Monomial, Integer>> p2_it = p2.mMonos.entrySet().iterator();
+			while (p2_it.hasNext()) {
+				Entry<Monomial, Integer> p2Entry = (Entry<Monomial, Integer>)p2_it.next();
+				Monomial m2 = m1.multiplication(p2Entry.getKey());
+
+				if (result.containsKey(m2)) {
+					//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
+					Integer n = result.get(m2);
+					m2.constVaule = m2.constVaule + n;
+					result.remove(m2);
+				}
+				if (m2.constVaule != 0) {
+					result.put(m2, m2.constVaule);
+				}
+			}
+		}
+		return new Polynomial(result);
+	}
+	
+	public static Polynomial arithmetic(Polynomial p1, Polynomial p2, Operator op) throws ExpressionException {
 		//coding...
-		return null;
+		Polynomial p3 = new Polynomial();
+		if (op.toString().compareTo("+")==0){
+			p3 = add(p1,p2);
+		}else if (op.toString().compareTo("*")==0){
+			p3 = multiplication(p1,p2);
+		}else if (op.toString().compareTo("-")==0){
+			p2 = multiplication(new Polynomial("1-2"),p2);
+			p3 = add(p1,p2);
+		}else{
+			String integer = "(\\d+)";
+			
+			Pattern p = Pattern.compile(integer);
+			Matcher m = p.matcher(p2.toString());
+			
+			if (!m.matches()) {
+				throw new ExpressionException("Power Non Integer");
+			}
+			
+			int power = Integer.parseInt(p2.toString());
+			Polynomial pTempt = new Polynomial(p1.toString());
+			
+			for(int i = 0 ; i < power-1; i++){
+				pTempt = multiplication(pTempt,p1);
+			}
+			p3 = pTempt;
+		}
+		return p3;
 	}
 
 	@Override
@@ -750,7 +919,13 @@ public class Lab1 {
 			
 			
 			Polynomial poly2 = new Polynomial();
-			poly2.expressionBracket("2	+7x7yt(x+	 t(6+9(7*9)) + 6 	(g-6)(2-(z-x)+6(x-z))(c+c))");
+			//poly2.expressionBracket("2	+7x7yt(x+	 t(6+9(7*9)) + 6 	(g-6)(2-(z-x)+6(x-z))(c+c))");
+			//poly2.expressionBracket("2x (x+y)+2x^3y(x^2	+(y+3x)*(2y)(3y))");
+			//poly2.expressionBracket("2x (x+y)+2x*x*x*y(x*x	+(y+3x)*(2y)(3y))");
+			//poly2.expressionBracket("x(x*x	+(y+3x)*(2y)(3y))");
+			poly2.expressionBracket("x^2	+(y+3x)*(2y)(3y*(x+y+z+3x))");
+			System.out.println();
+			System.out.println(poly2);
 
 		} catch (ExpressionException e) {
 			e.printStackTrace();
