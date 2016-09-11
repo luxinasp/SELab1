@@ -1,11 +1,8 @@
 package xyz.luxin.java.secourse;
 
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
-import java.util.TreeSet;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 
@@ -19,9 +16,11 @@ class ExpressionException extends Exception
 	}
 } 
 
+
 abstract class Expression {
 	//Expression Abstract Class
 }
+
 
 class Operator extends Expression {
 	
@@ -41,6 +40,7 @@ class Operator extends Expression {
 		return String.valueOf(op);
 	}
 }
+
 
 class Monomial extends Expression implements Comparable<Monomial> {
 	
@@ -139,6 +139,30 @@ class Monomial extends Expression implements Comparable<Monomial> {
 		return;
 	}
 	
+	public Monomial simplify(TreeMap<String, Integer> pairs) {
+		
+		Monomial result = new Monomial(this);
+		
+		Iterator<Entry<String, Integer>> it = pairs.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<String, Integer> entry = (Entry<String, Integer>)it.next();
+			String key = entry.getKey();
+			Integer value = entry.getValue();
+			
+			if (result.varIndex.containsKey(key)) {
+				Integer index = result.varIndex.get(key);
+				result.varIndex.remove(key);
+				result.varNumber--;
+				result.monIndex -= index;
+				for (int i=0; i<index; i++) {
+					result.constVaule *= value;
+				}
+			}
+		}
+		
+		return result;
+	}
+	
 	public Monomial derivative(String var) {
 		
 		Monomial result = new Monomial();
@@ -164,10 +188,6 @@ class Monomial extends Expression implements Comparable<Monomial> {
 		return result;
 	}
 	
-	public Monomial simplify(TreeMap<String, Integer> pairs) {
-		return null;
-	}
-
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
@@ -247,6 +267,11 @@ class Polynomial extends Expression {
 		mMonos = new TreeMap<Monomial, Integer>();
 	}
 	
+	public Polynomial(String expString) throws ExpressionException {
+		mMonos = new TreeMap<Monomial, Integer>();
+		expression(expString);
+	}
+	
 	public Polynomial(Monomial m) {
 		mMonos = new TreeMap<Monomial, Integer>();
 		mMonos.put(m, m.constVaule);
@@ -256,7 +281,7 @@ class Polynomial extends Expression {
 		mMonos = monos;
 	}
 	
-	public void expression(String expString)  throws ExpressionException {
+	public void expression(String expString) throws ExpressionException {
 		
 		String pFactor = "((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
 		String pMonomial = "(" + pFactor + "(\\s*(\\*)?\\s*" + pFactor + ")*)";
@@ -314,9 +339,27 @@ class Polynomial extends Expression {
 		return;
 	}
 	
-	public Polynomial simplify(TreeMap<Monomial, Integer> pairs) {
-		return null;
+	public Polynomial simplify(TreeMap<String, Integer> pairs) {
 		
+		TreeMap<Monomial, Integer> result = new TreeMap<Monomial, Integer>();
+		
+		Iterator<Entry<Monomial, Integer>> it = mMonos.entrySet().iterator();
+		while (it.hasNext()) {
+			Entry<Monomial, Integer> entry = (Entry<Monomial, Integer>)it.next();
+			Monomial m = entry.getKey().simplify(pairs);
+
+			if (result.containsKey(m)) {
+				//Map中已存在的单项式与get参数的单项式不是一个对象，两者仅系数不同
+				Integer n = result.get(m);
+				m.constVaule = m.constVaule + n;
+				result.remove(m);
+			}
+			if (m.constVaule != 0) {
+				result.put(m, m.constVaule);
+			}
+		}
+
+		return new Polynomial(result);
 	}
 	
 	public Polynomial derivative(String var) {
@@ -343,13 +386,18 @@ class Polynomial extends Expression {
 	}
 	
 	public static Polynomial arithmetic(Polynomial p1, Polynomial p2, Operator op) {
-		//
+		//coding...
 		return null;
 	}
 
 	@Override
 	public String toString() {
 		// TODO Auto-generated method stub
+		
+		if (mMonos.isEmpty()) {
+			return new String("0");
+		}
+		
 		String result = new String("");
 		
 		Iterator<Entry<Monomial, Integer>> it = mMonos.entrySet().iterator();
@@ -374,20 +422,27 @@ class Polynomial extends Expression {
 
 
 public class Lab1 {
-	
-	
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		
-		Polynomial poly = new Polynomial();
 		try {
-			poly.expression("12- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 - 9 -		22y*x*z");
+			Polynomial poly = new Polynomial("12-3z*xx*yyy +6*xx^2yyy^4*z-yyy yyy*yyy- z^7 - 9 -22yyy*xx*z");
 			System.out.println(poly);
+			System.out.println(poly.derivative("xx"));
+			System.out.println(poly.derivative("xx").derivative("z"));
+			System.out.println(poly.derivative("xx").derivative("z").derivative("yyy"));
+			System.out.println(poly.derivative("xx").derivative("z").derivative("yyy").derivative("yyy"));
 			System.out.println(poly.derivative("x"));
-			System.out.println(poly.derivative("x").derivative("z"));
-			System.out.println(poly.derivative("x").derivative("z").derivative("y"));
-			System.out.println(poly.derivative("x").derivative("z").derivative("y").derivative("y"));
+			System.out.println();
+			
+			TreeMap<String, Integer> vars = new TreeMap<String, Integer>();
+			vars.put("x", 3);
+			vars.put("xx", 3);
+			vars.put("z", -2);
+			System.out.println(poly.simplify(vars));
+			System.out.println();
+			
 		} catch (ExpressionException e) {
 			// TODO Auto-generated catch block
 			System.out.println(e.getMessage());
@@ -395,96 +450,4 @@ public class Lab1 {
 		}
 	}
 	
-	public static void testTreeMap() {
-		
-		TreeMap<String, Integer> tree = new TreeMap<String, Integer>();
-		
-		tree.put("xdf", 23);
-		tree.put("a", 4);
-		tree.put("zht", -9);
-		tree.put("zha", 56);
-		tree.put("abc", 1);
-		
-		Iterator<Entry<String, Integer>> it = tree.entrySet().iterator();
-		while (it.hasNext()) {
-			Entry<String, Integer> entry = (Entry<String, Integer>)it.next();
-			String key = entry.getKey();
-			Integer value = entry.getValue();
-			System.out.print(key + "  ");
-		}
-		System.out.println();
-		
-		return;
-	}
-	
-	public static void reference(String str) {
-		
-//		String pFactor = "(\\d+|[a-zA-Z]+)";
-//		String pMonomial = "(" + pFactor + "((\\*)?" + pFactor + ")*)";
-//		String pPolynomial = "(" + pMonomial + "([\\+\\-]" + pMonomial + ")*)";
-		
-		
-//		String pFactor = "((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
-//		String pMonomial = "(" + pFactor + "((\\*)?" + pFactor + ")*)";
-//		String pPolynomial = "(" + pMonomial + "([\\+\\-]" + pMonomial + ")*)";
-		
-		
-//		String pFactor = "(\\s*((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))\\s*)";
-//		String pMonomial = "(\\s*(" + pFactor + "((\\*)?" + pFactor + ")*)\\s*)";
-//		String pPolynomial = "(\\s*(" + pMonomial + "([\\+\\-]" + pMonomial + ")*)\\s*)";
-		
-		//String str = "2- 3 z*x*y +6*x^2y^4*z-y 	y*y	- z^7 ";
-		String pFactor = "((\\d+\\^\\d+)|([a-zA-Z]+\\^\\d+)|(\\d+)|([a-zA-Z]+))";
-		String pMonomial = "(" + pFactor + "(\\s*(\\*)?\\s*" + pFactor + ")*)";
-		String pPolynomial = "(\\s*(" + pMonomial + "(\\s*[\\+\\-]\\s*" + pMonomial + ")*)\\s*)";
-		
-		Pattern p = Pattern.compile(pPolynomial);
-		Matcher m = p.matcher(str);	
-		
-		Pattern pOp = Pattern.compile("([\\+\\-])");
-		Matcher mOp = pOp.matcher(str);
-		
-		System.out.println(str);
-		
-		if (m.matches()) {
-			System.out.println("Format Right");
-			
-			Pattern p1 = Pattern.compile(pMonomial);
-			Matcher m1 = p1.matcher(str);
-			
-			if (m1.find()) {
-				System.out.print(m1.group(0));
-				System.out.print(" : ");
-				
-				Pattern p2 = Pattern.compile(pFactor);
-				Matcher m2 = p2.matcher(m1.group(0));
-				
-				while (m2.find()) {
-					System.out.print(m2.group(0));
-					System.out.print("  ");
-				}
-				
-				System.out.println();
-			}
-			
-			while (m1.find() && mOp.find()) {
-				System.out.print(mOp.group(0) + "#" + m1.group(0));
-				System.out.print(" : ");
-				
-				Pattern p2 = Pattern.compile(pFactor);
-				Matcher m2 = p2.matcher(m1.group(0));
-				
-				while (m2.find()) {
-					System.out.print(m2.group(0));
-					System.out.print("  ");
-				}
-				
-				System.out.println("");
-			}
-	
-		} else {
-			System.out.println("Format Error");
-		}
-	}
-
 }
