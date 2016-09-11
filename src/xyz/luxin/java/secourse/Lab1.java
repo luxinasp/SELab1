@@ -150,13 +150,11 @@ class ExpressionTree {
 	
 	public static void midOrder(ExpressionTree t) {
 		if(null != t) {
+			System.out.print("(");
 			midOrder(t.left);
-			if (t.exp instanceof Operator) {
-				System.out.print(" " + t.exp + " ");
-			} else {
-				System.out.print("(" + t.exp + ")");
-			}
+			System.out.print(t.exp);
 			midOrder(t.right);
+			System.out.print(")");
 		}
 	}
 
@@ -752,7 +750,7 @@ public class Lab1 {
 			
 			
 			Polynomial poly2 = new Polynomial();
-			poly2.expressionBracket("2	+7x7yt(x+  t(6+9(7*9)) + 6 	(g-6)(2-(z-x)+6(x-z))(c+c))");
+			poly2.expressionBracket("2	+7x7yt(x+	 t(6+9(7*9)) + 6 	(g-6)(2-(z-x)+6(x-z))(c+c))");
 
 		} catch (ExpressionException e) {
 			e.printStackTrace();
