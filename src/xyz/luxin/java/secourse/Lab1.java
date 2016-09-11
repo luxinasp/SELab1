@@ -436,11 +436,19 @@ public class Lab1 {
 			System.out.println(poly.derivative("x"));
 			System.out.println();
 			
-			TreeMap<String, Integer> vars = new TreeMap<String, Integer>();
-			vars.put("x", 3);
-			vars.put("xx", 3);
-			vars.put("z", -2);
-			System.out.println(poly.simplify(vars));
+			TreeMap<String, Integer> vars1 = new TreeMap<String, Integer>();
+			vars1.put("x", 3);
+			vars1.put("xx", 3);
+			vars1.put("z", -2);
+			System.out.println(poly.simplify(vars1));
+			System.out.println();
+			
+			TreeMap<String, Integer> vars2 = new TreeMap<String, Integer>();
+			vars2.put("x", 3);
+			vars2.put("xx", 3);
+			vars2.put("z", -2);
+			vars2.put("yyy", 1);
+			System.out.println(poly.simplify(vars2).simplify(vars2));
 			System.out.println();
 			
 		} catch (ExpressionException e) {
