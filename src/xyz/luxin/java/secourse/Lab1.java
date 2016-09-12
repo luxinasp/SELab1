@@ -476,6 +476,22 @@ class Monomial extends Expression implements Comparable<Monomial> {
 						return -1;
 					}
 				}
+				
+				//fix same monIndex, same varNumber, same vars, different varIndex
+				it1 = this.varIndex.entrySet().iterator();
+				it2 = o.varIndex.entrySet().iterator();
+				while (it1.hasNext() && it2.hasNext()) {
+					Entry<String, Integer> entry1 = (Entry<String, Integer>)it1.next();
+					Entry<String, Integer> entry2 = (Entry<String, Integer>)it2.next();
+					Integer index1 = entry1.getValue();
+					Integer index2 = entry2.getValue();
+					if (index1 > index2) {
+						return 1;
+					} else if (index1 < index2) {
+						return -1;
+					}
+				}
+				
 				return 0;
 			}
 		}
@@ -614,17 +630,17 @@ class Polynomial extends Expression {
 		ExpressionTree tree = new ExpressionTree();
 		ExpressionTree.createTree(tree, expString);
 		
-		System.out.print("midOrder: ");
-		ExpressionTree.midOrder(tree);
-		System.out.println();
-		
-		System.out.print("preOrder: ");
-		ExpressionTree.preOrder(tree);
-		System.out.println();
-		
-		System.out.print("lastOrder: ");
-		ExpressionTree.lastOrder(tree);
-		System.out.println();
+//		System.out.print("midOrder: ");
+//		ExpressionTree.midOrder(tree);
+//		System.out.println();
+//		
+//		System.out.print("preOrder: ");
+//		ExpressionTree.preOrder(tree);
+//		System.out.println();
+//		
+//		System.out.print("lastOrder: ");
+//		ExpressionTree.lastOrder(tree);
+//		System.out.println();
 		
 		this.mMonos = ExpressionTree.obtainPolynomial(tree).mMonos;
 	}
@@ -923,7 +939,8 @@ public class Lab1 {
 			//poly2.expressionBracket("2x (x+y)+2x^3y(x^2	+(y+3x)*(2y)(3y))");
 			//poly2.expressionBracket("2x (x+y)+2x*x*x*y(x*x	+(y+3x)*(2y)(3y))");
 			//poly2.expressionBracket("x(x*x	+(y+3x)*(2y)(3y))");
-			poly2.expressionBracket("x^2	+(y+3x)*(2y)(3y*(x+y+z+3x))");
+			//poly2.expressionBracket("x^2	+(y+3x)*(2y)(3y*(x+y+z+3x))");
+			poly2.expressionBracket("(x+ y)^ (7- 2(2^2	- 2))");
 			System.out.println();
 			System.out.println(poly2);
 
