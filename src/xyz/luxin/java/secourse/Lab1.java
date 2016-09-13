@@ -2,6 +2,7 @@ package xyz.luxin.java.secourse;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -25,13 +26,12 @@ abstract class Expression {
 class ExpressionTree {
 
 	public Expression exp;
-	public ExpressionTree left, right;//, father;
+	public ExpressionTree left, right;
 	
 	public ExpressionTree() {
 		this.exp = null;
 		this.left = null;
 		this.right = null;
-		//this.father = null;
 	}
 	
 	public static Polynomial obtainPolynomial(ExpressionTree t) throws ExpressionException  {
@@ -46,6 +46,11 @@ class ExpressionTree {
 				t.exp = Polynomial.arithmetic((Polynomial)t.left.exp, (Polynomial)t.right.exp, (Operator)t.exp);
 				t.left = null;
 				t.right = null;
+				return (Polynomial)t.exp;
+			} else if (t.exp instanceof Polynomial) {
+				if (t.left!=null || t.right!=null) {
+					throw new ExpressionException("Internal Error");
+				}
 				return (Polynomial)t.exp;
 			}
 		}
@@ -142,8 +147,6 @@ class ExpressionTree {
 			t.exp = new Operator(chars[opIndex]);
 			t.left = new ExpressionTree();
 			t.right = new ExpressionTree();
-			//t.left.father = t;
-			//t.right.father = t;
 			String left = expString.substring(0, opIndex);
 			String right = expString.substring(opIndex+1, expString.length());
 			createTree(t.left, left);
@@ -852,7 +855,7 @@ class Polynomial extends Expression {
 			}
 			
 			int power = Integer.parseInt(p2.toString());
-			Polynomial pTempt = new Polynomial(p1.toString());
+			Polynomial pTempt = new Polynomial(p1.toString());//---------------------------------
 			
 			for(int i = 0 ; i < power-1; i++){
 				pTempt = multiplication(pTempt,p1);
@@ -889,65 +892,95 @@ class Polynomial extends Expression {
 		
 		return result;
 	}
-	
 }
 
 
 public class Lab1 {
 
+	@SuppressWarnings("resource")
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		
-		try {
-			/*
-			Polynomial poly = new Polynomial("12-3z*xx*yyy +6*xx^2yyy^4*z-yyy yyy*yyy- z^7 - 9 -22yyy*xx*z");
-			System.out.println(poly);
-			System.out.println(poly.derivative("xx"));
-			System.out.println(poly.derivative("xx").derivative("z"));
-			System.out.println(poly.derivative("xx").derivative("z").derivative("yyy"));
-			System.out.println(poly.derivative("xx").derivative("z").derivative("yyy").derivative("yyy"));
-			System.out.println(poly.derivative("x"));
-			System.out.println();
-			
-			TreeMap<String, Integer> vars1 = new TreeMap<String, Integer>();
-			vars1.put("x", 3);
-			vars1.put("xx", 3);
-			vars1.put("z", -2);
-			System.out.println(poly.simplify(vars1));
-			System.out.println();
-			
-			TreeMap<String, Integer> vars2 = new TreeMap<String, Integer>();
-			vars2.put("x", 3);
-			vars2.put("xx", 3);
-			vars2.put("z", -2);
-			vars2.put("yyy", 1);
-			System.out.println(poly.simplify(vars2).simplify(vars2));
-			System.out.println();
-			*/
-			
-//			String a = "	# ";
-//			Pattern p1 = Pattern.compile("\\s*(#)\\s*");
-//			Matcher m1 = p1.matcher(a);
-//			if (m1.matches()) {
-//				System.out.println(m1.group(1));
-//				return;
-//			}
-			
-			
-			Polynomial poly2 = new Polynomial();
-			//poly2.expressionBracket("2	+7x7yt(x+	 t(6+9(7*9)) + 6 	(g-6)(2-(z-x)+6(x-z))(c+c))");
-			//poly2.expressionBracket("2x (x+y)+2x^3y(x^2	+(y+3x)*(2y)(3y))");
-			//poly2.expressionBracket("2x (x+y)+2x*x*x*y(x*x	+(y+3x)*(2y)(3y))");
-			//poly2.expressionBracket("x(x*x	+(y+3x)*(2y)(3y))");
-			//poly2.expressionBracket("x^2	+(y+3x)*(2y)(3y*(x+y+z+3x))");
-			poly2.expressionBracket("(x+ y)^ (7- 2(2^2	- 2))");
-			System.out.println();
-			System.out.println(poly2);
 
-		} catch (ExpressionException e) {
-			e.printStackTrace();
-			System.out.println(e.getMessage());
-			return;
+		Polynomial poly = new Polynomial();
+		boolean isPoly = false;
+
+		while (true) {
+			System.out.print(">");
+			Scanner sc = new Scanner(System.in);
+			String command = sc.nextLine();
+
+			if ((command.toCharArray())[0] != '!') {
+				try {
+					poly.expressionBracket(command);
+					System.out.println(poly);
+					isPoly = true;
+				} catch (ExpressionException e) {
+					System.out.println(e.getMessage());
+					isPoly = false;
+				}
+				continue;
+			}
+			
+			if (!isPoly) {
+				System.out.println("Please Input Polynomial");
+				continue;
+			}
+
+			try {
+				if (command.substring(0, 5).equals("!d/d ")) {
+					String var = command.substring(5, command.length());
+					Polynomial pTmp = poly.derivative(var);
+					if (pTmp.toString().equals("0")) {
+						System.out.println("Var Not Found");
+					} else {
+						poly = pTmp;
+						System.out.println(poly);
+					}
+					continue;
+				} else if (command.substring(0, 9).equals("!simplify")) {
+					Pattern p1 = Pattern.compile("\\!simplify\\s*");
+					Matcher m1 = p1.matcher(command);	
+					if (m1.matches()) {
+						System.out.println(poly);
+						continue;
+					}
+					
+					TreeMap<String, Integer> pairs = new TreeMap<String, Integer>();
+					
+					Pattern p2 = Pattern.compile("\\!simplify(\\s+([a-zA-Z]+)\\s*=\\s*(\\d+))+\\s*");
+					Matcher m2 = p2.matcher(command);	
+					if (!m2.matches()) {
+						System.out.println("Input Error");
+						continue;
+					}
+					
+					Pattern p3 = Pattern.compile("([a-zA-Z]+)\\s*=\\s*(\\d+)");
+					Matcher m3 = p3.matcher(command);	
+					if (m3.find()) {
+						pairs.put(m3.group(1), Integer.valueOf(m3.group(2)));
+					} else {
+						System.out.println("Input Error");
+						continue;
+					}
+					
+					while (m3.find()) {
+						pairs.put(m3.group(1), Integer.valueOf(m3.group(2)));
+					}
+					
+					poly = poly.simplify(pairs);
+					System.out.println(poly);
+					
+					continue;
+				} else {
+					System.out.println("Unknown Command");
+					continue;
+				}
+			} catch (IndexOutOfBoundsException e) {
+				e.printStackTrace();
+				System.out.println("Input Error");
+				continue;
+			}
+			//  (x+ y2^1)^(2 (2 *2 -(3*(2- 1)))) + x+ y^2
+			//!simplify x=1 y=10
 		}
 		
 	}
