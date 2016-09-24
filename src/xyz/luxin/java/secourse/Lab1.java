@@ -58,9 +58,7 @@ class ExpressionTree {
 	}
 	
 	public static void createTree(ExpressionTree t, String expString) throws ExpressionException {
-		
-		//System.out.println(expString);
-		
+	
 		Pattern p;
 		Matcher m;
 		char[] chars = expString.toCharArray();
@@ -141,7 +139,6 @@ class ExpressionTree {
 		}
 		
 		if (opIndex == -1) {
-			//t.exp = new Polynomial(expString);
 			throw new ExpressionException("Format Error");
 		} else {
 			t.exp = new Operator(chars[opIndex]);
@@ -213,7 +210,6 @@ class Monomial extends Expression implements Comparable<Monomial> {
 	
 	
 	public Monomial() {
-		// TODO Auto-generated constructor stub
 		constVaule = 1;
 		varNumber = 0;
 		varIndex = new TreeMap<String, Integer>();
@@ -221,7 +217,6 @@ class Monomial extends Expression implements Comparable<Monomial> {
 	}
 	
 	public Monomial(Monomial o) {
-		// TODO Auto-generated constructor stub
 		this.constVaule = o.constVaule;
 		this.varNumber = o.varNumber;
 		this.varIndex = new TreeMap<String, Integer>(o.varIndex);
@@ -366,7 +361,7 @@ class Monomial extends Expression implements Comparable<Monomial> {
 		return result;
 	}
 	
-	public Monomial multiplication(Monomial a){//////////////////////////////////////////////////////////
+	public Monomial multiplication(Monomial a){
 		Monomial result1 = new Monomial();
 		result1.constVaule = this.constVaule*a.constVaule;
 		result1.monIndex = 0;
@@ -389,7 +384,6 @@ class Monomial extends Expression implements Comparable<Monomial> {
 			}
 		}
 
-		//System.out.println(a.toString());
 		Iterator<Entry<String, Integer>> it1 = a.varIndex.entrySet().iterator();
 		while (it1.hasNext()) {
 			Entry<String, Integer> entry = (Entry<String, Integer>)it1.next();
@@ -417,7 +411,6 @@ class Monomial extends Expression implements Comparable<Monomial> {
 	
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
 		
 		if (varIndex.isEmpty()) {
 			return String.valueOf(constVaule);
@@ -454,7 +447,6 @@ class Monomial extends Expression implements Comparable<Monomial> {
 
 	@Override
 	public int compareTo(Monomial o) {
-		// TODO Auto-generated method stub
 		
 		if (this.monIndex > o.monIndex) {
 			return 1;
@@ -626,24 +618,10 @@ class Polynomial extends Expression {
 		if (realCount != matchCount) {
 			throw new ExpressionException("Format Error");
 		}
-		
-//		System.out.println(expString);
-//		throw new ExpressionException("Break Point");
+
 		
 		ExpressionTree tree = new ExpressionTree();
 		ExpressionTree.createTree(tree, expString);
-		
-//		System.out.print("midOrder: ");
-//		ExpressionTree.midOrder(tree);
-//		System.out.println();
-//		
-//		System.out.print("preOrder: ");
-//		ExpressionTree.preOrder(tree);
-//		System.out.println();
-//		
-//		System.out.print("lastOrder: ");
-//		ExpressionTree.lastOrder(tree);
-//		System.out.println();
 		
 		this.mMonos = ExpressionTree.obtainPolynomial(tree).mMonos;
 	}
@@ -766,8 +744,6 @@ class Polynomial extends Expression {
 		return new Polynomial(result);
 	}
 	
-	
-	
 	public static Polynomial add(Polynomial p1, Polynomial p2){
 		
 		TreeMap<Monomial, Integer> result = new TreeMap<Monomial, Integer>();
@@ -855,7 +831,7 @@ class Polynomial extends Expression {
 			}
 			
 			int power = Integer.parseInt(p2.toString());
-			Polynomial pTempt = new Polynomial(p1.toString());//---------------------------------
+			Polynomial pTempt = new Polynomial(p1.toString());
 			
 			for(int i = 0 ; i < power-1; i++){
 				pTempt = multiplication(pTempt,p1);
@@ -867,7 +843,6 @@ class Polynomial extends Expression {
 
 	@Override
 	public String toString() {
-		// TODO Auto-generated method stub
 		
 		if (mMonos.isEmpty()) {
 			return new String("0");
@@ -896,6 +871,23 @@ class Polynomial extends Expression {
 
 
 public class Lab1 {
+	
+	public static Polynomial expression(String exp) throws ExpressionException {
+		
+		Polynomial poly = new Polynomial();
+		poly.expressionBracket(exp);
+		return poly;
+	}
+	
+	public static Polynomial simplify(Polynomial poly, TreeMap<String, Integer> pairs) {
+			
+		return poly.simplify(pairs);
+	}
+	
+	public static Polynomial derivative(Polynomial poly, String var) {
+		
+		return poly.derivative(var);
+	}
 
 	@SuppressWarnings("resource")
 	public static void main(String[] args) {
@@ -910,7 +902,7 @@ public class Lab1 {
 
 			if ((command.toCharArray())[0] != '!') {
 				try {
-					poly.expressionBracket(command);
+					poly = expression(command);
 					System.out.println(poly);
 					isPoly = true;
 				} catch (ExpressionException e) {
@@ -928,7 +920,7 @@ public class Lab1 {
 			try {
 				if (command.substring(0, 5).equals("!d/d ")) {
 					String var = command.substring(5, command.length());
-					Polynomial pTmp = poly.derivative(var);
+					Polynomial pTmp = derivative(poly, var);
 					if (pTmp.toString().equals("0")) {
 						System.out.println("Var Not Found");
 					} else {
@@ -966,7 +958,7 @@ public class Lab1 {
 						pairs.put(m3.group(1), Integer.valueOf(m3.group(2)));
 					}
 					
-					poly = poly.simplify(pairs);
+					poly = simplify(poly, pairs);
 					System.out.println(poly);
 					
 					continue;
@@ -979,8 +971,6 @@ public class Lab1 {
 				System.out.println("Input Error");
 				continue;
 			}
-			//  (x+ y2^1)^(2 (2 *2 -(3*(2- 1)))) + x+ y^2
-			//!simplify x=1 y=10
 		}
 		
 	}
